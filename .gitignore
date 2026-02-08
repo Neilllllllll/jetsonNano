@@ -1,0 +1,9 @@
+# Ignorer les environnements virtuels n'importe où
+.venv/
+venv/
+ENV/
+my_yolo_env/
+
+# Ignorer le cache Python
+**/__pycache__/
+*.py[cod]
