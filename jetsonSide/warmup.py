@@ -1,34 +1,39 @@
 import torch
 import torchvision
 
-# Cette fonction vérifie les versions de PyTorch et Torchvision, ainsi que la disponibilité de CUDA.
-def check_pytorch_torchvision_cuda():
-    print("--- Vérification du système ---")
-    print(f"Version de PyTorch : {torch.__version__}")
-    print(f"Version de Torchvision : {torchvision.__version__}")
-    print(f"Version de CUDA interne à PyTorch : {torch.version.cuda}")
-    print(f"Version de cuDNN : {torch.backends.cudnn.version()}")
-
-    print("\n--- Test CUDA ---")
-    cuda_disponible = torch.cuda.is_available()
-    print(f"CUDA est disponible : {cuda_disponible}")
-
-    # Si CUDA est disponible, affichez des informations sur le GPU et effectuez un test de calcul.
-    if cuda_disponible:
-        print(f"Nombre de GPU : {torch.cuda.device_count()}")
-        print(f"Nom du GPU : {torch.cuda.get_device_name(0)}")
-        
-        # Test de calcul sur le GPU
-        x = torch.rand(3, 3).cuda()
-        print("\nTest de calcul réussi : Un tenseur a été créé sur le GPU.")
-        print(f"Emplacement du tenseur : {x.device}")
+def check_torchvision_cuda():
+    print("\n--- Vérification de la compatibilité CUDA de Torchvision ---")
+    if torch.cuda.is_available():
+        try:
+            # Test de chargement d'un modèle pré-entraîné de Torchvision
+            model = torchvision.models.resnet18(pretrained=True).cuda()
+            print("Torchvision est compatible avec CUDA et le modèle a été chargé sur le GPU.")
+        except Exception as e:
+            print(f"Erreur lors du chargement du modèle sur le GPU : {e}")
+        # Libérer la mémoire GPU
+        finally:            
+            del model
+            torch.cuda.empty_cache()
     else:
-        print("\nATTENTION : CUDA n'est pas détecté par PyTorch.")
-        print("Vérifiez que vous avez bien installé la version 'NVIDIA-PyTorch' spécifique aux Jetson.")
+        print("CUDA n'est pas disponible, donc la compatibilité CUDA de Torchvision ne peut pas être vérifiée.")
 
-# Cette fonction effectue un warmup en chargeant un modèle YOLOv5 et en effectuant une inférence sur une image d'exemple.
-def warmup():
-    check_pytorch_torchvision_cuda()
+def check_torch_cuda():
+    print("\n--- Vérification de la compatibilité CUDA de PyTorch ---")
+    if torch.cuda.is_available():
+        print("CUDA est disponible. PyTorch peut utiliser le GPU.")
+        print(f"Nombre de GPU disponibles : {torch.cuda.device_count()}")
+        print(f"Nom du GPU : {torch.cuda.get_device_name(0)}")
+    else:
+        print("CUDA n'est pas disponible. PyTorch utilisera le CPU.")
+
+def check_opencv():
+    try:
+        import cv2
+        print(f"Version d'OpenCV : {cv2.__version__}")
+    except ImportError:
+        print("OpenCV n'est pas installé. Veuillez l'installer pour utiliser les fonctionnalités de traitement d'image.")
+
+def check_yolov5():
     # Load a YOLOv5 model (options: yolov5n, yolov5s, yolov5m, yolov5l, yolov5x)
     model = torch.hub.load("ultralytics/yolov5", "yolov5s")  # Default: yolov5s
 
@@ -42,3 +47,10 @@ def warmup():
     results.print()  # Print results to console
     results.show()  # Display results in a window
     results.save()  # Save results to runs/detect/exp
+
+# Cette fonction effectue un warmup en chargeant un modèle YOLOv5 et en effectuant une inférence sur une image d'exemple.
+def warmup():
+    check_torchvision_cuda()
+    check_torch_cuda()
+    check_opencv()
+    #check_yolov5()
